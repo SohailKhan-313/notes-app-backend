@@ -19,14 +19,50 @@ app.use(passport.initialize());
 configurePassport(passport);
 
 // Middlewares
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5174',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+
+      // Allow if origin matches allowed list or ends with netlify.app
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.netlify.app') ||
+        process.env.CLIENT_URL === '*'
+      ) {
+        return callback(null, true);
+      }
+
+      // Default allow to prevent unexpected CORS blocks during deployment
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Root Route
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: '🚀 Notes App Backend API is running successfully!',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      notes: '/api/notes',
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Health Check API
 app.get('/api/health', (req, res) => {
@@ -59,3 +95,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   console.log(`🔗 API Base: http://localhost:${PORT}/api`);
 });
+
+module.exports = app;

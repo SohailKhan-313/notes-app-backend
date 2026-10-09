@@ -35,7 +35,7 @@ app.use(
       // Allow if origin matches allowed list or ends with netlify.app
       if (
         allowedOrigins.includes(origin) ||
-        origin.endsWith('.netlify.app') ||
+        origin.endsWith('.netlify.app') || origin.endsWith('.vercel.app') ||
         process.env.CLIENT_URL === '*'
       ) {
         return callback(null, true);
